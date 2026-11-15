@@ -6,9 +6,30 @@ peça), o **reparo**, o **catálogo de serviços** e o **estoque de peças** (re
 baixas). Comunica a finalização ao OS Service. É participante da saga orquestrada pelo
 OS Service.
 
-> **Situação: esqueleto (etapa 2 de 5).** Projeto, configuração, mensageria, CI,
-> manifestos e ambiente local estão prontos e testados. O domínio (estoque migrado do
-> monolito da fase 3, fila e diagnóstico novos) entra na etapa 3.
+> **Situação: domínio e participação na saga implementados (etapa 3 de 5).** Deploy no
+> EKS e README final com diagramas e evidências de cobertura entram na etapa 5.
+
+## O que este serviço faz
+
+| Quem | Como | O quê |
+| --- | --- | --- |
+| Orquestrador (OS Service) | comando `AbrirOrdemExecucao` | OS entra na fila de diagnóstico |
+| Mecânico | `POST /ordens-execucao/{osId}/diagnostico/iniciar` | Pega a OS da fila |
+| Mecânico | `POST /ordens-execucao/{osId}/itens/servicos` · `/itens/pecas` | Registra serviços do catálogo e peças do estoque |
+| Mecânico | `POST /ordens-execucao/{osId}/diagnostico/concluir` | **Reserva as peças** (com validade) e publica `DiagnosticoConcluido` |
+| Orquestrador | comando `LiberarParaReparo` (pagamento confirmado) | Baixa as peças e põe a OS na fila de reparo — ou responde `ReparoNaoLiberado` |
+| Mecânico | `POST /ordens-execucao/{osId}/reparo/iniciar` · `/reparo/finalizar` | Executa o reparo e **comunica a finalização** ao OS Service |
+| Orquestrador | comando `CancelarOrdemExecucao` (compensação) | Libera as reservas e cancela |
+| Todos | `GET /fila?etapa=DIAGNOSTICO\|REPARO` | Fila de execução por ordem de chegada |
+| Administrador | `/servicos` · `/pecas` | Catálogo de serviços e estoque |
+
+**Reserva com validade** (`RESERVA_VALIDADE`, padrão 48 h): a oficina não segura peça para
+sempre. Se a reserva vence e outra OS usa a peça antes do pagamento, a liberação do reparo
+falha com `ESTOQUE_INSUFICIENTE` e a saga **estorna o pagamento** — é o cenário de
+compensação demonstrado no vídeo.
+
+Os três comandos são **idempotentes pela chave de negócio**: repetidos, não repetem o efeito
+mas respondem de novo, o que destrava a saga quando uma resposta se perde (ADR 010).
 
 ---
 
