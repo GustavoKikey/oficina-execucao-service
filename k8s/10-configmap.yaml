@@ -1,0 +1,23 @@
+# Configuração não sensível do Execução Service. Segredos (banco, RabbitMQ, New Relic,
+# chaves JWT) ficam em Secrets criados pelo pipeline de CD — nunca no repositório.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: oficina-execucao-config
+  namespace: oficina
+  labels:
+    app.kubernetes.io/name: oficina-execucao
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: oficina
+data:
+  AMBIENTE: "prod"
+  JAVA_OPTS: "-XX:MaxRAMPercentage=50.0"
+  RABBITMQ_HOST: "rabbitmq.oficina.svc.cluster.local"
+  RABBITMQ_PORT: "5672"
+  MP_JWT_VERIFY_PUBLICKEY_LOCATION: "/etc/oficina/jwt/publicKey.pem"
+  # Placeholder: o CD substitui pelo endpoint real do RDS, lido do SSM
+  # (/oficina/<ambiente>/execucao/db/jdbc-url), publicado pelo Terraform de infra/.
+  DB_URL: "jdbc:postgresql://placeholder:5432/oficina_execucao"
+  # Telemetria: o CD liga o SDK (OTEL_SDK_DISABLED=false) quando há license key.
+  OTLP_ENDPOINT: "https://otlp.nr-data.net:4318"
+  OTEL_SDK_DISABLED: "true"
