@@ -11,7 +11,10 @@ peça), o **reparo**, o **catálogo de serviços** e o **estoque de peças** (re
 baixas). Comunica a finalização ao OS Service. É participante da saga orquestrada pelo
 OS Service.
 
-> **Situação:** domínio, saga, testes (unitários, integração), CI com SonarCloud e implantação na AWS (Terraform próprio e deploy contínuo no EKS) implementados.
+> **Situação:** implementado e validado na AWS em 2026-11-16 (fluxo completo de uma OS no
+> EKS, com pagamento real no Mercado Pago e saga `CONCLUIDA`).
+>
+> **Checklist da entrega da fase 4** (requisito → onde está) e vídeo: [README do OS Service](https://github.com/GustavoKikey/oficina-os-service#entrega-da-fase-4--onde-está-cada-requisito).
 
 ## O que este serviço faz
 
@@ -92,6 +95,31 @@ Testes unitários e testes que sobem a aplicação contra PostgreSQL e RabbitMQ 
 | [SonarCloud](https://sonarcloud.io/summary/overall?id=GustavoKikey_oficina-execucao-service) | Quality gate da `main` e de cada PR (badges no topo, atualizados a cada análise). Em 2026-11-16: cobertura **94,7%**, 0 bugs, 0 vulnerabilidades, 0 code smells |
 | [Resumo de cada execução do CI](https://github.com/GustavoKikey/oficina-execucao-service/actions/workflows/ci.yml) | Tabela de cobertura do JaCoCo (instruções, branches, linhas); relatório completo no artefato `relatorio-jacoco` |
 | Build local | `./mvnw verify` falha abaixo de **80%**; relatório em `target/site/jacoco/index.html` |
+
+## API (Swagger)
+
+Swagger UI em **`/swagger`** (local: http://localhost:8081/swagger; na AWS, pelo load balancer
+público). A especificação OpenAPI exportada do serviço em execução está em
+[`docs/openapi.yaml`](docs/openapi.yaml). Autenticação: o token de funcionário do OS Service
+(`POST /auth/login`), no botão *Authorize* — este serviço só valida o JWT.
+
+| Rota | Quem | O quê |
+| --- | --- | --- |
+| `GET /fila?etapa=DIAGNOSTICO\|REPARO` | Mecânico | Fila de execução, por ordem de chegada |
+| `GET /ordens-execucao/{osId}` | Funcionários | A ordem de execução e os itens |
+| `POST /ordens-execucao/{osId}/diagnostico/iniciar` · `/concluir` | Mecânico | Diagnóstico; concluir **reserva as peças** e avisa o OS |
+| `POST /ordens-execucao/{osId}/itens/servicos` · `/itens/pecas` | Mecânico | Serviços do catálogo e peças do estoque |
+| `POST /ordens-execucao/{osId}/reparo/iniciar` · `/finalizar` | Mecânico | Reparo; finalizar **comunica a finalização** ao OS |
+| `/servicos` · `/pecas` · `POST /pecas/{id}/saldo` | Administrador | Catálogo e estoque |
+
+## Observabilidade
+
+A mesma do Tech Challenge da fase 3, o **New Relic**: traces distribuídos por OpenTelemetry
+(OTLP) — cada mensagem publicada continua o trace de quem a originou, então um fluxo aparece
+como um único trace atravessando os três serviços —, métricas Micrometer/Prometheus (duração por etapa, falhas) e
+logs JSON com `traceId` e `correlationId` (= id da OS). Painel e alertas da saga:
+[`newrelic-saga.py`](https://github.com/GustavoKikey/oficina-infra-k8s/blob/main/scripts/newrelic-saga.py).
+Localmente, o Jaeger do docker compose mostra o mesmo trace.
 
 ## Mensageria
 
