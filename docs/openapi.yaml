@@ -1,0 +1,769 @@
+---
+openapi: 3.1.0
+components:
+  securitySchemes:
+    SecurityScheme:
+      description: Authentication
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    BearerAuth:
+      type: http
+      description: "JWT emitido pelo POST /auth/login (cole apenas o token, sem prefixo)."
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    AdicionarSaldoRequest:
+      type: object
+      required:
+      - quantidade
+      properties:
+        quantidade:
+          type: integer
+          format: int32
+          description: Quantidade de peças a adicionar ao saldo
+          examples:
+          - 10
+          exclusiveMinimum: 0
+    AtualizarPecaRequest:
+      type: object
+      required:
+      - descricao
+      - valorUnitario
+      properties:
+        descricao:
+          type: string
+          description: Descrição da peça
+          examples:
+          - Filtro de Óleo
+          pattern: \S
+          maxLength: 200
+        valorUnitario:
+          type: number
+          description: Valor unitário da peça
+          examples:
+          - 45.9
+          minimum: 0.0
+          multipleOf: 0.01
+    AtualizarServicoRequest:
+      type: object
+      required:
+      - descricao
+      - valorBase
+      properties:
+        descricao:
+          type: string
+          description: Descrição do serviço
+          examples:
+          - Troca de Óleo
+          pattern: \S
+          maxLength: 200
+        valorBase:
+          type: number
+          description: Valor base do serviço
+          examples:
+          - 120.0
+          minimum: 0.0
+          multipleOf: 0.01
+    CadastrarPecaRequest:
+      type: object
+      required:
+      - descricao
+      - valorUnitario
+      properties:
+        descricao:
+          type: string
+          description: Descrição da peça
+          examples:
+          - Filtro de Óleo
+          pattern: \S
+          maxLength: 200
+        valorUnitario:
+          type: number
+          description: Valor unitário da peça
+          examples:
+          - 45.9
+          minimum: 0.0
+          multipleOf: 0.01
+        quantidadeInicial:
+          type: integer
+          format: int32
+          description: Quantidade inicial em estoque
+          examples:
+          - 10
+          minimum: 0
+    CadastrarServicoRequest:
+      type: object
+      required:
+      - descricao
+      - valorBase
+      properties:
+        descricao:
+          type: string
+          description: Descrição do serviço
+          examples:
+          - Troca de Óleo
+          pattern: \S
+          maxLength: 200
+        valorBase:
+          type: number
+          description: Valor base do serviço
+          examples:
+          - 120.0
+          minimum: 0.0
+          multipleOf: 0.01
+    ItemView:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        tipo:
+          type: string
+        referenciaId:
+          $ref: "#/components/schemas/UUID"
+        descricao:
+          type: string
+        quantidade:
+          type: integer
+          format: int32
+        valorUnitario:
+          type: number
+        subtotal:
+          type: number
+        reservaId:
+          $ref: "#/components/schemas/UUID"
+    OffsetDateTime:
+      type: string
+      format: date-time
+      examples:
+      - 2022-03-10T12:15:50-04:00
+    OrdemExecucaoResponse:
+      type: object
+      properties:
+        osId:
+          $ref: "#/components/schemas/UUID"
+        status:
+          type: string
+        fila:
+          type: string
+        veiculo:
+          $ref: "#/components/schemas/VeiculoView"
+        relatoCliente:
+          type: string
+        itens:
+          type: array
+          items:
+            $ref: "#/components/schemas/ItemView"
+        total:
+          type: number
+        orcamentoId:
+          $ref: "#/components/schemas/UUID"
+        mecanicoDiagnostico:
+          type: string
+        mecanicoReparo:
+          type: string
+        motivoCancelamento:
+          type: string
+        entrouNaFilaEm:
+          $ref: "#/components/schemas/OffsetDateTime"
+        diagnosticoIniciadoEm:
+          $ref: "#/components/schemas/OffsetDateTime"
+        diagnosticoConcluidoEm:
+          $ref: "#/components/schemas/OffsetDateTime"
+        liberadaParaReparoEm:
+          $ref: "#/components/schemas/OffsetDateTime"
+        reparoIniciadoEm:
+          $ref: "#/components/schemas/OffsetDateTime"
+        finalizadaEm:
+          $ref: "#/components/schemas/OffsetDateTime"
+        canceladaEm:
+          $ref: "#/components/schemas/OffsetDateTime"
+    Peca:
+      type: object
+      required:
+      - pecaId
+      - quantidade
+      properties:
+        pecaId:
+          $ref: "#/components/schemas/UUID"
+          description: ID da peça no estoque
+          type: string
+        quantidade:
+          type: integer
+          format: int32
+          examples:
+          - 2
+          exclusiveMinimum: 0
+    PecaResponse:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        descricao:
+          type: string
+        valorUnitario:
+          type: number
+        quantidadeTotal:
+          type: integer
+          format: int32
+        saldoDisponivel:
+          type: integer
+          format: int32
+    Servico:
+      type: object
+      required:
+      - servicoId
+      properties:
+        servicoId:
+          $ref: "#/components/schemas/UUID"
+          description: ID do serviço no catálogo
+          type: string
+        valorCobrado:
+          type: number
+          description: "Valor cobrado — se omitido, usa o valor base do catálogo"
+          examples:
+          - 120.0
+          minimum: 0.0
+          multipleOf: 0.01
+    ServicoResponse:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        descricao:
+          type: string
+        valorBase:
+          type: number
+    UUID:
+      type: string
+      format: uuid
+      pattern: "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"
+    VeiculoView:
+      type: object
+      properties:
+        placa:
+          type: string
+        marca:
+          type: string
+        modelo:
+          type: string
+        ano:
+          type: integer
+          format: int32
+tags:
+- name: Execução
+  description: "Fila de execução, diagnóstico e reparo"
+- name: Peças / Estoque
+  description: Catálogo de peças e insumos com controle de estoque
+- name: Serviços
+  description: Catálogo de serviços de mão-de-obra
+paths:
+  /fila:
+    get:
+      summary: Fila de execução por ordem de chegada
+      description: "etapa=DIAGNOSTICO (padrão): na fila e em diagnóstico; etapa=REPARO:\
+        \ liberadas e em reparo"
+      tags:
+      - Execução
+      parameters:
+      - name: etapa
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OrdemExecucaoResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - BearerAuth:
+        - MECANICO
+        - ATENDENTE
+        - ADMINISTRADOR
+  /ordens-execucao/{osId}:
+    get:
+      summary: "Ordem de execução da OS: itens, reservas e etapas"
+      tags:
+      - Execução
+      parameters:
+      - name: osId
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "404":
+          description: OS ainda não chegou à Execução
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - BearerAuth:
+        - MECANICO
+        - ATENDENTE
+        - ADMINISTRADOR
+  /ordens-execucao/{osId}/diagnostico/concluir:
+    post:
+      summary: "Conclui o diagnóstico: reserva as peças e envia os itens para o orç\
+        amento"
+      tags:
+      - Execução
+      parameters:
+      - name: osId
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "422":
+          description: Estoque insuficiente — nada é reservado
+        "409":
+          description: Diagnóstico não iniciado ou sem itens
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - BearerAuth:
+        - MECANICO
+        - ADMINISTRADOR
+  /ordens-execucao/{osId}/diagnostico/iniciar:
+    post:
+      summary: Mecânico pega a OS da fila e inicia o diagnóstico
+      tags:
+      - Execução
+      parameters:
+      - name: osId
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "409":
+          description: OS não está na fila de diagnóstico
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - BearerAuth:
+        - MECANICO
+        - ADMINISTRADOR
+  /ordens-execucao/{osId}/itens/pecas:
+    post:
+      summary: "Registra uma peça no diagnóstico (confere o saldo, ainda sem reservar)"
+      tags:
+      - Execução
+      parameters:
+      - name: osId
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Peca"
+        required: true
+      responses:
+        "422":
+          description: Estoque insuficiente
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+        "400":
+          description: Bad Request
+      security:
+      - BearerAuth:
+        - MECANICO
+        - ADMINISTRADOR
+  /ordens-execucao/{osId}/itens/servicos:
+    post:
+      summary: Registra um serviço do catálogo no diagnóstico
+      tags:
+      - Execução
+      parameters:
+      - name: osId
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Servico"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrdemExecucaoResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+        "400":
+          description: Bad Request
+      security:
+      - BearerAuth:
+        - MECANICO
+        - ADMINISTRADOR
+  /ordens-execucao/{osId}/itens/{itemId}:
+    delete:
+      summary: Remove um item do diagnóstico
+      tags:
+      - Execução
+      parameters:
+      - name: itemId
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      - name: osId
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrdemExecucaoResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - BearerAuth:
+        - MECANICO
+        - ADMINISTRADOR
+  /ordens-execucao/{osId}/reparo/finalizar:
+    post:
+      summary: Finaliza o reparo e comunica ao OS Service
+      tags:
+      - Execução
+      parameters:
+      - name: osId
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "409":
+          description: OS não está em reparo
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - BearerAuth:
+        - MECANICO
+        - ADMINISTRADOR
+  /ordens-execucao/{osId}/reparo/iniciar:
+    post:
+      summary: Mecânico pega a OS liberada (paga) e inicia o reparo
+      tags:
+      - Execução
+      parameters:
+      - name: osId
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "409":
+          description: OS não está na fila de reparo
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - BearerAuth:
+        - MECANICO
+        - ADMINISTRADOR
+  /pecas:
+    get:
+      summary: Lista todas as peças
+      tags:
+      - Peças / Estoque
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PecaResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - BearerAuth:
+        - ADMINISTRADOR
+    post:
+      summary: Cadastra uma nova peça
+      tags:
+      - Peças / Estoque
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CadastrarPecaRequest"
+        required: true
+      responses:
+        "201":
+          description: Peça criada
+        "400":
+          description: Payload inválido
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - BearerAuth:
+        - ADMINISTRADOR
+  /pecas/{id}:
+    delete:
+      summary: Remove uma peça (bloqueado se houver reservas ativas)
+      tags:
+      - Peças / Estoque
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "204":
+          description: Removida
+        "404":
+          description: Peça não encontrada
+        "409":
+          description: Peça possui reservas ativas
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - BearerAuth:
+        - ADMINISTRADOR
+    get:
+      summary: Busca uma peça pelo ID (inclui saldo disponível)
+      tags:
+      - Peças / Estoque
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "404":
+          description: Peça não encontrada
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - BearerAuth:
+        - ADMINISTRADOR
+    put:
+      summary: Atualiza dados de catálogo da peça (descrição e valor unitário)
+      tags:
+      - Peças / Estoque
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AtualizarPecaRequest"
+        required: true
+      responses:
+        "404":
+          description: Peça não encontrada
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+        "400":
+          description: Bad Request
+      security:
+      - BearerAuth:
+        - ADMINISTRADOR
+  /pecas/{id}/saldo:
+    post:
+      summary: Adiciona saldo (compra/devolução) à peça
+      tags:
+      - Peças / Estoque
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdicionarSaldoRequest"
+        required: true
+      responses:
+        "200":
+          description: Saldo atualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PecaResponse"
+        "400":
+          description: Quantidade inválida
+        "404":
+          description: Peça não encontrada
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - BearerAuth:
+        - ADMINISTRADOR
+  /servicos:
+    get:
+      summary: Lista todos os serviços
+      tags:
+      - Serviços
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ServicoResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - BearerAuth:
+        - ADMINISTRADOR
+    post:
+      summary: Cadastra um novo serviço
+      tags:
+      - Serviços
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CadastrarServicoRequest"
+        required: true
+      responses:
+        "201":
+          description: Serviço criado
+        "400":
+          description: Payload inválido
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - BearerAuth:
+        - ADMINISTRADOR
+  /servicos/{id}:
+    delete:
+      summary: Remove um serviço
+      tags:
+      - Serviços
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "204":
+          description: Removido
+        "404":
+          description: Serviço não encontrado
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - BearerAuth:
+        - ADMINISTRADOR
+    get:
+      summary: Busca um serviço pelo ID
+      tags:
+      - Serviços
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "404":
+          description: Serviço não encontrado
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      security:
+      - BearerAuth:
+        - ADMINISTRADOR
+    put:
+      summary: Atualiza um serviço
+      tags:
+      - Serviços
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AtualizarServicoRequest"
+        required: true
+      responses:
+        "404":
+          description: Serviço não encontrado
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+        "400":
+          description: Bad Request
+      security:
+      - BearerAuth:
+        - ADMINISTRADOR
+info:
+  title: Oficina — Execução Service
+  version: 1.0.0
+  description: "Fila de execução, diagnóstico, reparo, catálogo de serviços e estoque\
+    \ de peças (fase 4)."
