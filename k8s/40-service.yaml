@@ -1,6 +1,5 @@
-# Service interno do Execução Service. A exposição para fora do cluster (load
-# balancer, API Gateway, rota do webhook do Mercado Pago) é decidida na
-# etapa de nuvem — ver docs/fase-4/arquitetura.md §11 e RFC 004.
+# Service do Execução Service dentro do cluster (smoke test do deploy, port-forward).
+# Fora do cluster: 45-service-publico.yaml (mecânico (fila, diagnóstico, reparo) e estoque), restrito por IP.
 apiVersion: v1
 kind: Service
 metadata:
