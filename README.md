@@ -79,6 +79,7 @@ Testes unitários e testes que sobem a aplicação contra PostgreSQL e RabbitMQ 
 
 ## CI/CD
 
-[`ci.yml`](.github/workflows/ci.yml) em todo push fora da `main` e em PRs: build,
-testes, gate de cobertura, SonarCloud, imagem Docker e kubeconform. Deploy no EKS
+[`ci.yml`](.github/workflows/ci.yml) em todo PR para a `main` e na `main` depois do merge:
+build, testes, gate de cobertura, SonarCloud (o plano gratuito analisa só PRs e a `main`),
+imagem Docker e kubeconform. Numa branch sem PR, rode à mão (*Run workflow*). Deploy no EKS
 (`homolog` → `hom`, `main` → `prod`) na etapa 5. `main` protegida, merge só por PR.
